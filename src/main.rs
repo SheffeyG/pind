@@ -1,23 +1,27 @@
-use pnet::datalink::{self};
-use pnet::ipnetwork::IpNetwork;
+use std::time::Duration;
+use tokio::time::timeout;
 
-fn main() {
-    // 获取所有网络接口
-    let interfaces = datalink::interfaces();
-
-    // 遍历每个网络接口
-    for interface in interfaces {
-        // 排除回环接口和无效接口
-        if interface.is_loopback() || !interface.is_up() {
-            continue;
-        }
-
-        // 获取接口的 IP 地址
-        for ip_network in &interface.ips {
-            if let IpNetwork::V4(ipv4_network) = ip_network {
-                let ip_addr = ipv4_network.ip();
-                println!("IP 地址: {}", ip_addr);
+#[tokio::main]
+async fn main() -> Result<(), reqwest::Error> {
+    let timeout_duration = Duration::from_secs(5);
+    let url = "https://www.google.com";
+    let response = timeout(timeout_duration, reqwest::get(url)).await;
+    match response {
+        Ok(result) => {
+            match result {
+                Ok(res) => {
+                    let status = res.status();
+                    println!("Status from Google: {}", status);
+                }
+                Err(err) => {
+                    println!("Request error: {}", err);
+                }
             }
         }
+        Err(_) => {
+            println!("Request timed out!");
+        }
     }
+    Ok(())
 }
+
